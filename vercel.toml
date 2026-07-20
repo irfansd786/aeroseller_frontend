@@ -1,0 +1,6 @@
+[project]
+name = "aeroseller-frontend"
+
+[build]
+command = "npm run build"
+outputDirectory = "dist"
