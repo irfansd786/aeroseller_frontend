@@ -4,3 +4,7 @@ name = "aeroseller-frontend"
 [build]
 command = "npm run build"
 outputDirectory = "dist"
+
+[[routes]]
+src = "/(.*)"
+dest = "/index.html"
