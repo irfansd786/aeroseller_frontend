@@ -38,8 +38,8 @@ export const ProductList: React.FC = () => {
     if (searchQuery) params.search = searchQuery;
 
     return Promise.all([
-      axios.get('http://localhost:5000/api/categories'),
-      axios.get('http://localhost:5000/api/products', { params })
+      axios.get('https://aeroseller-backend.onrender.com/api/categories'),
+      axios.get('https://aeroseller-backend.onrender.com/api/products', { params })
     ])
       .then(([catRes, prodRes]) => {
         setCategories(catRes.data);

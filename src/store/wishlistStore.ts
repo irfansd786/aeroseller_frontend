@@ -9,7 +9,7 @@ interface WishlistState {
   hasItem: (productId: string) => boolean;
 }
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://aeroseller-backend.onrender.com/api';
 
 export const useWishlistStore = create<WishlistState>((set, get) => ({
   items: [],

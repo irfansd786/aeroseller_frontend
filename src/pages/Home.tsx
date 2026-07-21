@@ -63,8 +63,8 @@ export const Home: React.FC = () => {
   const fetchHomeData = () => {
     setLoading(true);
     return Promise.all([
-      axios.get('http://localhost:5000/api/categories'),
-      axios.get('http://localhost:5000/api/products')
+      axios.get('https://aeroseller-backend.onrender.com/api/categories'),
+      axios.get('https://aeroseller-backend.onrender.com/api/products')
     ])
       .then(([catRes, prodRes]) => {
         setCategories(catRes.data);

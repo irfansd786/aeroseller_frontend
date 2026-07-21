@@ -71,7 +71,7 @@ export const Profile: React.FC = () => {
 
   const loadOrderHistory = () => {
     setLoadingOrders(true);
-    axios.get('http://localhost:5000/api/orders')
+    axios.get('https://aeroseller-backend.onrender.com/api/orders')
       .then(res => {
         const guestEmail = localStorage.getItem('orderCustomerEmail');
         const emailFilter = user?.email || guestEmail || 'customer@gmail.com';
@@ -86,7 +86,7 @@ export const Profile: React.FC = () => {
   };
 
   const loadProfile = () => {
-    axios.get('http://localhost:5000/api/profile')
+    axios.get('https://aeroseller-backend.onrender.com/api/profile')
       .then(res => {
         const profile = res.data;
         setAddresses(profile.addresses || []);
@@ -112,7 +112,7 @@ export const Profile: React.FC = () => {
       setWishlistProducts([]);
       return;
     }
-    axios.get('http://localhost:5000/api/products')
+    axios.get('https://aeroseller-backend.onrender.com/api/products')
       .then(res => {
         const matches = res.data.filter((p: Product) => wishlistIds.includes(p.id));
         setWishlistProducts(matches);
@@ -124,7 +124,7 @@ export const Profile: React.FC = () => {
     e.preventDefault();
     setSavingProfile(true);
     try {
-      const res = await axios.put('http://localhost:5000/api/profile', {
+      const res = await axios.put('https://aeroseller-backend.onrender.com/api/profile', {
         name,
         phone
       });
@@ -157,7 +157,7 @@ export const Profile: React.FC = () => {
 
     const updated = [...addresses, newAddrObj];
     try {
-      const res = await axios.put('http://localhost:5000/api/profile', { addresses: updated });
+      const res = await axios.put('https://aeroseller-backend.onrender.com/api/profile', { addresses: updated });
       if (res.data.success) {
         addToast("Address added successfully", "success");
         setAddresses(updated);
@@ -177,7 +177,7 @@ export const Profile: React.FC = () => {
   const handleDeleteAddress = async (addrId: string) => {
     const updated = addresses.filter(a => a.id !== addrId);
     try {
-      const res = await axios.put('http://localhost:5000/api/profile', { addresses: updated });
+      const res = await axios.put('https://aeroseller-backend.onrender.com/api/profile', { addresses: updated });
       if (res.data.success) {
         addToast("Address deleted", "success");
         setAddresses(updated);

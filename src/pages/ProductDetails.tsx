@@ -35,14 +35,14 @@ export const ProductDetails: React.FC = () => {
     if (!id) return;
     setLoading(true);
 
-    axios.get(`http://localhost:5000/api/products/${id}`)
+    axios.get(`https://aeroseller-backend.onrender.com/api/products/${id}`)
       .then(res => {
         const productData = res.data;
         setProduct(productData);
         setActiveImage(productData.images[0]);
         setReviewName(user?.name || '');
 
-        return axios.get('http://localhost:5000/api/products')
+        return axios.get('https://aeroseller-backend.onrender.com/api/products')
           .then(prodRes => {
             const related = prodRes.data.filter((p: Product) => 
               p.id !== id && 
@@ -143,7 +143,7 @@ export const ProductDetails: React.FC = () => {
     setSubmittingReview(true);
 
     try {
-      const res = await axios.post(`http://localhost:5000/api/products/${product.id}/reviews`, {
+      const res = await axios.post(`https://aeroseller-backend.onrender.com/api/products/${product.id}/reviews`, {
         user: reviewName,
         rating: reviewRating,
         comment: reviewComment
@@ -152,7 +152,7 @@ export const ProductDetails: React.FC = () => {
       if (res.data.success) {
         addToast("Review submitted successfully!", "success");
         // Reload product details to show new review
-        const updatedRes = await axios.get(`http://localhost:5000/api/products/${product.id}`);
+        const updatedRes = await axios.get(`https://aeroseller-backend.onrender.com/api/products/${product.id}`);
         setProduct(updatedRes.data);
         setReviewComment('');
       }

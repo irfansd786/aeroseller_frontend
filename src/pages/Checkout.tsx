@@ -48,7 +48,7 @@ export const Checkout: React.FC = () => {
     }
 
     // Load addresses from profile details
-    axios.get('http://localhost:5000/api/profile')
+    axios.get('https://aeroseller-backend.onrender.com/api/profile')
       .then(res => {
         const saved = res.data.addresses || [];
         setAddresses(saved);
@@ -122,7 +122,7 @@ export const Checkout: React.FC = () => {
         paymentMethod
       };
 
-      const res = await axios.post('http://localhost:5000/api/orders', orderPayload);
+      const res = await axios.post('https://aeroseller-backend.onrender.com/api/orders', orderPayload);
       if (res.data.success) {
         // Persist customer email so order history can resolve guest orders
         localStorage.setItem('orderCustomerEmail', orderPayload.customerEmail);

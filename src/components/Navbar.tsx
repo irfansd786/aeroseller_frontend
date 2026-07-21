@@ -35,7 +35,7 @@ export const Navbar: React.FC = () => {
 
   // Fetch all products on mount to facilitate instant auto-suggestions
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products')
+    axios.get('https://aeroseller-backend.onrender.com/api/products')
       .then(res => setAllProducts(res.data))
       .catch(err => console.error("Error loading products for suggestions", err));
   }, []);

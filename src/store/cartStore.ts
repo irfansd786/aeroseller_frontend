@@ -23,7 +23,7 @@ interface CartState {
   clearCart: () => Promise<void>;
 }
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://aeroseller-backend.onrender.com/api';
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
