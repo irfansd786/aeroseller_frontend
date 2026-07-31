@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import axios from 'axios';
+import { apiService } from '../services/api';
 
 interface WishlistState {
   items: string[]; // array of productIds
@@ -9,42 +9,32 @@ interface WishlistState {
   hasItem: (productId: string) => boolean;
 }
 
-const API_URL = 'https://aeroseller-backend.onrender.com/api';
-
 export const useWishlistStore = create<WishlistState>((set, get) => ({
-  items: [],
+  items: ['prod-iphone15', 'prod-airpods-pro'],
   loading: false,
 
   fetchWishlist: async () => {
     set({ loading: true });
     try {
-      const res = await axios.get(`${API_URL}/profile`);
-      set({ items: res.data.wishlist || [], loading: false });
+      const list = await apiService.getWishlist();
+      set({ items: list || [], loading: false });
     } catch (err) {
-      console.error("Wishlist fetch failed:", err);
+      console.error("Wishlist fetch error:", err);
       set({ loading: false });
     }
   },
 
   toggleWishlist: async (productId) => {
-    const isFav = get().items.includes(productId);
-    let newItems = [];
-    if (isFav) {
-      newItems = get().items.filter(id => id !== productId);
+    try {
+      const updated = await apiService.toggleWishlist(productId);
+      set({ items: updated });
+    } catch (err) {
+      // optimistic toggle fallback
+      const isFav = get().items.includes(productId);
+      const newItems = isFav
+        ? get().items.filter(id => id !== productId)
+        : [...get().items, productId];
       set({ items: newItems });
-      try {
-        await axios.delete(`${API_URL}/wishlist/${productId}`);
-      } catch (err) {
-        console.error("Remove from wishlist failed:", err);
-      }
-    } else {
-      newItems = [...get().items, productId];
-      set({ items: newItems });
-      try {
-        await axios.post(`${API_URL}/wishlist`, { productId });
-      } catch (err) {
-        console.error("Add to wishlist failed:", err);
-      }
     }
   },
 

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Minus, Plus, Trash2, Ticket, ArrowRight, ShoppingBag } from 'lucide-react';
+import { Minus, Plus, Trash2, Ticket, ArrowRight, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useToastStore } from '../store/toastStore';
 import { useAuthStore } from '../store/authStore';
+import { ProductCard } from '../components/ProductCard';
+import { apiService } from '../services/api';
 import { formatINR } from '../utils/currency';
+import type { Product } from '../data/mockData';
 
 export const Cart: React.FC = () => {
   const navigate = useNavigate();
@@ -14,9 +17,13 @@ export const Cart: React.FC = () => {
 
   const [couponCode, setCouponCode] = useState('');
   const [checkingCoupon, setCheckingCoupon] = useState(false);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     fetchCart();
+    apiService.getProducts()
+      .then(res => setRecommendedProducts(res.slice(0, 4)))
+      .catch(err => console.error(err));
   }, []);
 
   const handleQuantityDecrease = (productId: string, currentQty: number) => {
@@ -49,134 +56,131 @@ export const Cart: React.FC = () => {
       addToast("Coupon applied successfully!", "success");
       setCouponCode('');
     } else {
-      addToast("Invalid or expired coupon code", "error");
+      addToast("Invalid coupon. Try 'SAVE10', 'WELCOME20', or 'AERO500'", "error");
     }
   };
 
-  // Calculations
-  const subtotal = items.reduce((acc, item) => {
-    const finalPrice = item.price * (1 - item.discount / 100);
-    return acc + (finalPrice * item.quantity);
-  }, 0);
+  const rawSubtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const itemDiscounts = items.reduce((acc, item) => acc + (item.price * (item.discount / 100) * item.quantity), 0);
+  const subtotalAfterProductDiscount = rawSubtotal - itemDiscounts;
 
-  // Discount
-  let discountAmt = 0;
+  let couponDiscountAmt = 0;
   if (coupon) {
     if (coupon.discountType === 'percentage') {
-      discountAmt = subtotal * (coupon.value / 100);
+      couponDiscountAmt = subtotalAfterProductDiscount * (coupon.value / 100);
     } else if (coupon.discountType === 'fixed') {
-      discountAmt = Math.min(coupon.value, subtotal);
+      couponDiscountAmt = Math.min(coupon.value, subtotalAfterProductDiscount);
     }
   }
 
-  const shipping = subtotal > 150 || subtotal === 0 ? 0 : 15;
-  const tax = (subtotal - discountAmt) * 0.08; // 8% tax rate
-  const total = Math.max(0, subtotal - discountAmt + shipping + tax);
+  const totalDiscount = itemDiscounts + couponDiscountAmt;
+  const shipping = subtotalAfterProductDiscount > 499 || items.length === 0 ? 0 : 49;
+  const tax = (subtotalAfterProductDiscount - couponDiscountAmt) * 0.08;
+  const totalAmount = Math.max(0, subtotalAfterProductDiscount - couponDiscountAmt + shipping + tax);
 
   if (loading && items.length === 0) {
     return (
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
         <div className="h-10 w-48 bg-neutral-100 dark:bg-zinc-900 rounded-md animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-8 h-80 bg-neutral-100 dark:bg-zinc-900 rounded-[28px] animate-pulse" />
-          <div className="lg:col-span-4 h-80 bg-neutral-100 dark:bg-zinc-900 rounded-[28px] animate-pulse" />
+          <div className="lg:col-span-8 h-80 bg-neutral-100 dark:bg-zinc-900 rounded-3xl animate-pulse" />
+          <div className="lg:col-span-4 h-80 bg-neutral-100 dark:bg-zinc-900 rounded-3xl animate-pulse" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <h1 className="text-2xl font-black text-neutral-900 dark:text-white">Shopping Cart</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+      <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white">
+        My Cart ({items.reduce((acc, item) => acc + item.quantity, 0)} items)
+      </h1>
 
       {items.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Items List */}
           <div className="lg:col-span-8 space-y-4">
-            <div className="bg-white dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-850 rounded-[28px] p-6 divide-y divide-neutral-100 dark:divide-zinc-850">
+            <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-3xl p-6 divide-y divide-neutral-100 dark:divide-zinc-850 shadow-sm">
               {items.map((item) => {
                 const finalPrice = item.price * (1 - item.discount / 100);
                 return (
                   <div key={item.productId} className="flex flex-col sm:flex-row items-center gap-4 py-5 first:pt-0 last:pb-0">
-                    {/* Item Thumbnail */}
-                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-neutral-50 dark:bg-zinc-950 flex-shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
+                    <img src={item.image} alt={item.name} className="w-20 h-20 rounded-2xl object-cover bg-neutral-50 dark:bg-zinc-950 flex-shrink-0" />
 
-                    {/* Metadata */}
-                    <div className="flex-grow text-center sm:text-left space-y-1">
-                      <Link to={`/product/${item.productId}`} className="hover:text-primary transition-colors">
-                        <h3 className="font-bold text-sm text-neutral-800 dark:text-zinc-200 line-clamp-1">{item.name}</h3>
+                    <div className="flex-grow text-center sm:text-left space-y-1 min-w-0">
+                      <Link to={`/product/${item.productId}`} className="hover:text-emerald-600 transition-colors">
+                        <h3 className="font-bold text-sm text-neutral-900 dark:text-white truncate">{item.name}</h3>
                       </Link>
-                      <p className="text-xs text-neutral-450">
-                        Price: {formatINR(finalPrice)}
-                        {item.discount > 0 && <span className="text-red-500 font-bold ml-1">{item.discount}% off</span>}
-                      </p>
+                      <div className="flex items-center gap-2 justify-center sm:justify-start text-xs text-neutral-400">
+                        {item.selectedColor && <span>Color: {item.selectedColor}</span>}
+                        {item.selectedVariant && <span>Variant: {item.selectedVariant}</span>}
+                      </div>
+                      <div className="flex items-center gap-2 justify-center sm:justify-start text-xs">
+                        <span className="font-black text-neutral-900 dark:text-white">{formatINR(finalPrice)}</span>
+                        {item.discount > 0 && (
+                          <span className="text-neutral-400 line-through text-[11px]">{formatINR(item.price)}</span>
+                        )}
+                        {item.discount > 0 && (
+                          <span className="text-emerald-600 font-bold text-[11px]">{item.discount}% off</span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Controls & Removal */}
                     <div className="flex items-center gap-6">
-                      
-                      {/* Qty adjustments */}
-                      <div className="flex items-center gap-3 border border-neutral-200 dark:border-zinc-800 rounded-full px-2.5 py-1 bg-neutral-55 dark:bg-zinc-900">
+                      <div className="flex items-center gap-3 border border-neutral-200 dark:border-zinc-800 rounded-full px-3 py-1 bg-neutral-50 dark:bg-zinc-950">
                         <button
                           onClick={() => handleQuantityDecrease(item.productId, item.quantity)}
-                          className="p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 cursor-pointer"
+                          className="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="text-xs font-bold text-neutral-700 dark:text-zinc-300 w-4 text-center">{item.quantity}</span>
+                        <span className="text-xs font-black text-neutral-800 dark:text-zinc-200 w-4 text-center">{item.quantity}</span>
                         <button
                           onClick={() => handleQuantityIncrease(item.productId, item.quantity)}
-                          className="p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 cursor-pointer"
+                          className="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
-                      {/* Line total price */}
-                      <div className="text-right min-w-[70px]">
-                        <span className="font-extrabold text-neutral-800 dark:text-zinc-150 text-sm">
+                      <div className="text-right min-w-[80px]">
+                        <span className="font-black text-sm text-neutral-900 dark:text-white">
                           {formatINR(finalPrice * item.quantity)}
                         </span>
                       </div>
 
-                      {/* Remove trash */}
                       <button
                         onClick={() => handleRemove(item.productId)}
-                        className="p-2.5 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
+                        className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Coupon Code section */}
-            <div className="bg-white dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-850 rounded-[28px] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3 text-neutral-600 dark:text-neutral-350">
-                <Ticket className="w-5 h-5 text-primary" />
+            <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <Ticket className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs">Have a Coupon Code?</h4>
-                  <p className="text-[10px] text-neutral-400">Try applying 'SAVE10' (10% Off) or 'WELCOME20' (₹20 Off).</p>
+                  <h4 className="font-bold text-xs text-neutral-900 dark:text-white">Apply Promo Coupon</h4>
+                  <p className="text-[10px] text-neutral-400">Available: SAVE10, WELCOME20, AERO500</p>
                 </div>
               </div>
               <form onSubmit={handleCouponSubmit} className="flex gap-2 w-full sm:w-auto">
                 <input
                   type="text"
-                  placeholder="Enter code"
+                  placeholder="Enter coupon code"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
-                  className="bg-neutral-50 dark:bg-zinc-950 text-zinc-805 dark:text-zinc-100 px-4 py-2 rounded-xl border border-neutral-200 dark:border-zinc-800 focus:outline-none focus:border-primary text-xs w-full sm:w-32 shadow-xs"
+                  className="bg-neutral-100 dark:bg-zinc-950 text-neutral-900 dark:text-white px-4 py-2 rounded-2xl border border-neutral-200 dark:border-zinc-800 focus:outline-none text-xs uppercase font-bold w-full sm:w-40"
                 />
                 <button
                   type="submit"
                   disabled={checkingCoupon}
-                  className="bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 text-xs font-bold px-4 py-2 rounded-xl transition-all"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2 rounded-2xl transition-all cursor-pointer shadow-md"
                 >
                   Apply
                 </button>
@@ -184,69 +188,100 @@ export const Cart: React.FC = () => {
             </div>
           </div>
 
-          {/* Checkout Summary panel */}
-          <div className="lg:col-span-4 bg-neutral-50 dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-850 rounded-[28px] p-6 space-y-6">
-            <h3 className="font-extrabold text-neutral-850 dark:text-white text-base">Order Summary</h3>
+          <div className="lg:col-span-4 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-3xl p-6 space-y-6 shadow-sm">
+            <h3 className="font-black text-neutral-900 dark:text-white text-base border-b border-neutral-100 dark:border-zinc-850 pb-3">
+              Price Details
+            </h3>
 
             <div className="space-y-3 text-xs text-neutral-600 dark:text-zinc-400">
               <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span className="font-bold">{formatINR(subtotal)}</span>
+                <span>Price ({items.reduce((acc, item) => acc + item.quantity, 0)} items)</span>
+                <span className="font-bold text-neutral-900 dark:text-white">{formatINR(rawSubtotal)}</span>
               </div>
+              
+              <div className="flex justify-between text-emerald-600 font-bold">
+                <span>Discount</span>
+                <span>-{formatINR(totalDiscount)}</span>
+              </div>
+
               {coupon && (
-                <div className="flex justify-between text-red-500 font-bold">
+                <div className="flex justify-between text-emerald-600 font-bold">
                   <span>Coupon Discount ({coupon.code})</span>
-                  <span>-{formatINR(discountAmt)}</span>
+                  <span>-{formatINR(couponDiscountAmt)}</span>
                 </div>
               )}
+
               <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>{shipping === 0 ? "Free" : formatINR(shipping)}</span>
+                <span>Delivery Charges</span>
+                <span className="text-emerald-600 font-bold">{shipping === 0 ? "FREE" : formatINR(shipping)}</span>
               </div>
+
               <div className="flex justify-between">
-                <span>Tax (8%)</span>
+                <span>GST Tax (8%)</span>
                 <span>{formatINR(tax)}</span>
               </div>
-              <div className="border-t border-neutral-200 dark:border-zinc-800 pt-3 flex justify-between text-sm font-extrabold text-neutral-850 dark:text-white">
-                <span>Total</span>
-                <span>{formatINR(total)}</span>
+
+              <div className="border-t border-neutral-200 dark:border-zinc-800 pt-4 flex justify-between text-base font-black text-neutral-900 dark:text-white">
+                <span>Total Amount</span>
+                <span>{formatINR(totalAmount)}</span>
               </div>
             </div>
+
+            {totalDiscount > 0 && (
+              <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 text-xs font-extrabold text-center">
+                You will save {formatINR(totalDiscount)} on this order!
+              </div>
+            )}
 
             <button
               onClick={() => {
                 if (!token) {
-                  addToast('Please sign in before proceeding to checkout.', 'error');
+                  addToast('Please login to proceed to checkout.', 'error');
                   navigate('/auth');
                   return;
                 }
                 navigate('/checkout');
               }}
-              className="w-full bg-primary hover:bg-primary-hover text-white text-xs font-bold py-3.5 rounded-full flex items-center justify-center gap-1.5 transition-all shadow-md shadow-primary/20 hover:scale-102 cursor-pointer"
+              className="w-full aero-btn-primary text-xs flex items-center justify-center gap-2 py-3.5"
             >
               Proceed to Checkout <ArrowRight className="w-4 h-4" />
             </button>
+
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-neutral-400 font-semibold pt-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Secured by 256-bit SSL Encryption
+            </div>
           </div>
 
         </div>
       ) : (
-        // EMPTY STATE CART
-        <div className="flex flex-col items-center justify-center text-center py-20 px-4 bg-neutral-50 dark:bg-zinc-950 border border-dashed border-neutral-200 dark:border-zinc-900 rounded-[28px] max-w-lg mx-auto">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 animate-pulse">
-            <ShoppingBag className="w-6 h-6" />
+        <div className="text-center py-20 px-4 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-3xl max-w-md mx-auto shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+            <ShoppingBag className="w-8 h-8" />
           </div>
           <h3 className="text-lg font-black text-neutral-900 dark:text-white mb-2">Your Cart is Empty</h3>
-          <p className="text-xs text-neutral-500 mb-6 max-w-xs">
-            Looks like you haven't added any premium products yet. Browse our collections and discover something special.
+          <p className="text-xs text-neutral-500 mb-6">
+            Looks like you haven't added any products yet. Browse catalog and save deals.
           </p>
           <Link
             to="/products"
-            className="bg-primary hover:bg-primary-hover text-white text-xs font-bold px-6 py-2.5 rounded-full shadow-md transition-all hover:scale-105"
+            className="aero-btn-primary text-xs px-8 py-3 inline-block"
           >
             Start Shopping
           </Link>
         </div>
       )}
+
+      {recommendedProducts.length > 0 && (
+        <div className="space-y-6 pt-4">
+          <h3 className="text-xl font-black text-neutral-900 dark:text-white">You May Also Like</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {recommendedProducts.map(p => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

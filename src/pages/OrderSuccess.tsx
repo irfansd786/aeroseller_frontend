@@ -1,53 +1,80 @@
 import React from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { CheckCircle2, ShoppingBag, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ShoppingBag, PackageCheck, Download, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const OrderSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const orderId = searchParams.get('orderId') || 'ord-unknown';
+  const orderId = searchParams.get('orderId') || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  const estDate = new Date();
+  estDate.setDate(estDate.getDate() + 3);
+  const formattedDate = estDate.toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' });
+
+  const handleDownloadInvoice = () => {
+    const invoiceContent = `AeroSeller Tax Invoice\nOrder ID: ${orderId}\nDate: ${new Date().toLocaleDateString()}\nStatus: Paid & Confirmed\nThank you for shopping with AeroSeller!`;
+    const blob = new Blob([invoiceContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Invoice_${orderId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="max-w-full mx-auto px-4 py-20 text-center space-y-6">
-      
-      {/* Icon with scale bounce animation */}
+    <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-6">
       <motion.div
         initial={{ scale: 0.3, opacity: 0 }}
-        animate={{ scale: [1.1, 1], opacity: 1 }}
-        transition={{ type: 'spring', damping: 10, stiffness: 100 }}
-        className="w-20 h-20 bg-green-50 dark:bg-green-950/20 rounded-full flex items-center justify-center text-primary mx-auto shadow-md"
+        animate={{ scale: [1.15, 1], opacity: 1 }}
+        transition={{ type: 'spring', damping: 12, stiffness: 120 }}
+        className="w-20 h-20 bg-emerald-50 dark:bg-emerald-950/40 rounded-full flex items-center justify-center text-emerald-600 mx-auto shadow-lg shadow-emerald-600/20"
       >
         <CheckCircle2 className="w-12 h-12" />
       </motion.div>
 
       <div className="space-y-2">
-        <h1 className="text-2xl font-black text-neutral-900 dark:text-white">Order Success!</h1>
-        <p className="text-xs text-neutral-450">
-          Thank you for shopping with AeroCart. Your transaction was processed securely.
+        <h1 className="text-3xl font-black text-neutral-900 dark:text-white">Order Confirmed!</h1>
+        <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+          Thank you for shopping with <strong>AeroSeller</strong>. Your order has been placed and is being packed.
         </p>
       </div>
 
-      {/* Order info badge */}
-      <div className="bg-neutral-50 dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-850 p-4 rounded-2xl font-mono text-xs text-zinc-700 dark:text-zinc-350">
-        <span className="block text-[10px] text-neutral-450 uppercase font-sans font-bold">Transaction Reference</span>
-        <span className="text-sm font-extrabold text-primary">{orderId}</span>
+      <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-6 rounded-3xl space-y-4 shadow-sm text-left">
+        <div className="flex items-center justify-between border-b border-neutral-100 dark:border-zinc-850 pb-3">
+          <div>
+            <span className="text-[10px] font-bold text-neutral-400 uppercase">Order ID</span>
+            <p className="text-sm font-black text-emerald-600">{orderId}</p>
+          </div>
+          <button
+            onClick={handleDownloadInvoice}
+            className="flex items-center gap-1 text-xs font-bold text-neutral-700 dark:text-zinc-300 hover:text-emerald-600 bg-neutral-100 dark:bg-zinc-800 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" /> Invoice
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 text-xs text-neutral-600 dark:text-zinc-400">
+          <Truck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+          <div>
+            <span className="font-bold text-neutral-900 dark:text-white block">Estimated Delivery</span>
+            <span>{formattedDate} (Standard Express)</span>
+          </div>
+        </div>
       </div>
 
-      <p className="text-xs text-neutral-450 leading-relaxed">
-        We have received your shipment requests. An invoice details record has been posted to your Profile dashboard.
-      </p>
-
-      {/* Navigation options */}
-      <div className="flex flex-col gap-3 pt-4">
+      <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <Link
           to="/profile?tab=orders"
-          className="w-full bg-primary hover:bg-primary-hover text-white text-xs font-bold py-3 rounded-full flex items-center justify-center gap-1.5 transition-all shadow-md shadow-primary/20 hover:scale-102"
+          className="flex-1 aero-btn-primary text-xs flex items-center justify-center gap-2 py-3.5"
         >
-          View Order History <ArrowRight className="w-4 h-4" />
+          <PackageCheck className="w-4 h-4" /> Track Order
         </Link>
         <Link
           to="/"
-          className="w-full bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-neutral-805 dark:text-zinc-200 text-xs font-bold py-3 rounded-full flex items-center justify-center gap-1.5 transition-all"
+          className="flex-1 border border-neutral-200 dark:border-zinc-800 hover:bg-neutral-50 dark:hover:bg-zinc-800 text-neutral-800 dark:text-zinc-200 font-bold text-xs py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"
         >
           <ShoppingBag className="w-4 h-4" /> Continue Shopping
         </Link>

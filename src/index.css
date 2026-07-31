@@ -7,7 +7,9 @@
   --color-dark-bg: #000000;
   --color-dark-card: #0a0a0a;
   --color-dark-border: #1f1f1f;
-  --radius-card: 20px;
+  --radius-card: 16px;
+  --shadow-soft: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+  --shadow-soft-emerald: 0 10px 30px -10px rgba(22, 163, 74, 0.2);
 }
 
 @layer base {
@@ -17,10 +19,10 @@
   }
 
   body {
-    @apply transition-colors duration-200;
+    @apply transition-colors duration-200 bg-white text-neutral-900 dark:bg-black dark:text-neutral-100 antialiased;
   }
 
-  /* Custom Scrollbar */
+  /* Custom Premium Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -35,19 +37,19 @@
   }
 }
 
-/* Custom premium classes */
+/* Glassmorphism & Micro-animations */
 .glassmorphism {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .dark .glassmorphism {
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -56,4 +58,17 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Custom Card & Button styles */
+.aero-card {
+  @apply bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800/80 rounded-2xl shadow-sm hover:shadow-xl dark:hover:border-zinc-700 transition-all duration-300;
+}
+
+.aero-btn-primary {
+  @apply bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-2xl shadow-md shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer;
+}
+
+.aero-btn-outline {
+  @apply border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 font-bold px-6 py-3 rounded-2xl transition-all cursor-pointer;
 }

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ToastContainer } from './components/Toast';
+import { CompareModal } from './components/CompareModal';
 import { Home } from './pages/Home';
 import { ProductList } from './pages/ProductList';
 import { ProductDetails } from './pages/ProductDetails';
@@ -24,10 +25,10 @@ const App: React.FC = () => {
     <Router>
       <div className="min-h-screen flex flex-col bg-white dark:bg-black text-neutral-900 dark:text-neutral-100 transition-colors duration-200">
         
-        {/* Navigation Bar */}
+        {/* Sticky Header Navigation Bar */}
         <Navbar />
 
-        {/* Dynamic Pages Area */}
+        {/* Dynamic Main Content Pages */}
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -41,10 +42,13 @@ const App: React.FC = () => {
           </Routes>
         </main>
 
-        {/* Footer section */}
+        {/* Detailed 5-Column Footer */}
         <Footer />
 
-        {/* Global Toast System */}
+        {/* Global Product Compare Drawer */}
+        <CompareModal />
+
+        {/* Global Toast Notification System */}
         <ToastContainer />
 
       </div>

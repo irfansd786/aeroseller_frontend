@@ -1,91 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Laptop, Shirt, Home as HomeIcon, Sparkles, Dumbbell, ChevronRight, Clock } from 'lucide-react';
+import { Laptop, Shirt, Home as HomeIcon, Sparkles, Dumbbell, ChevronRight, Clock, Truck, RotateCcw, ShieldCheck, ChevronLeft, Smartphone, Headphones, ShoppingBag, BookOpen, Gamepad2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
 import { ProductCard } from '../components/ProductCard';
-import type { Product } from '../components/ProductCard';
-
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-}
+import { apiService } from '../services/api';
+import { HERO_SLIDES, INITIAL_BRANDS, type Product } from '../data/mockData';
 
 const getCategoryIcon = (iconName: string) => {
   switch (iconName) {
+    case 'Smartphone': return Smartphone;
     case 'Laptop': return Laptop;
+    case 'Headphones': return Headphones;
     case 'Shirt': return Shirt;
     case 'Home': return HomeIcon;
     case 'Sparkles': return Sparkles;
     case 'Dumbbell': return Dumbbell;
+    case 'ShoppingBag': return ShoppingBag;
+    case 'BookOpen': return BookOpen;
+    case 'Gamepad2': return Gamepad2;
     default: return Laptop;
   }
 };
 
-const STATIC_HERO_SLIDES = [
-  {
-    id: 1,
-    title: "The Next Generation AeroBook Pro M3",
-    subtitle: "Thinness meets raw processing efficiency. Powered by Apple M3 Pro core architecture.",
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1600&auto=format&fit=crop&q=80",
-    link: "/product/prod-1",
-    tag: "NEW RELEASE"
-  },
-  {
-    id: 2,
-    title: "Curated Precision Swiss Movement Chronos",
-    subtitle: "Automatic calibration mechanical timepiece. 100 meters water depth rating.",
-    image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=1600&auto=format&fit=crop&q=80",
-    link: "/product/prod-2",
-    tag: "LUXURY STYLE"
-  },
-  {
-    id: 3,
-    title: "Specialty Third-Wave Coffee At Home",
-    subtitle: "Digital thermal PID heating with 15 bar pump pressure controls. Restocking now.",
-    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1600&auto=format&fit=crop&q=80",
-    link: "/product/prod-8",
-    tag: "HOME COMFORT"
-  }
-];
-
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentHero, setCurrentHero] = useState(0);
 
-  // Live countdown timer for Flash Sale
-  const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 34, seconds: 12 });
+  const [timeLeft, setTimeLeft] = useState({ hours: 2, minutes: 15, seconds: 36 });
 
-  const fetchHomeData = () => {
+  const fetchHomeData = async () => {
     setLoading(true);
-    return Promise.all([
-      axios.get('https://aeroseller-backend.onrender.com/api/categories'),
-      axios.get('https://aeroseller-backend.onrender.com/api/products')
-    ])
-      .then(([catRes, prodRes]) => {
-        setCategories(catRes.data);
-        setProducts(prodRes.data.filter((p: Product) => p.status === 'active'));
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to load home page data:", err);
-        setLoading(false);
-      });
+    try {
+      const [catData, prodData] = await Promise.all([
+        apiService.getCategories(),
+        apiService.getProducts()
+      ]);
+      setCategories(catData);
+      setProducts(prodData.filter(p => p.status === 'active'));
+    } catch (err) {
+      console.error("Failed to load home page data:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchHomeData();
 
-    const handleFocus = () => {
-      fetchHomeData();
-    };
-    window.addEventListener('focus', handleFocus);
-
-    // Flash sale countdown logic
     const interval = setInterval(() => {
       setTimeLeft(prev => {
         if (prev.seconds > 0) {
@@ -95,130 +59,177 @@ export const Home: React.FC = () => {
         } else if (prev.hours > 0) {
           return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
         } else {
-          return { hours: 4, minutes: 34, seconds: 12 }; // Loop reset
+          return { hours: 2, minutes: 15, seconds: 36 };
         }
       });
     }, 1000);
 
-    // Hero banner automatic scroll
     const heroInterval = setInterval(() => {
-      setCurrentHero(prev => (prev + 1) % STATIC_HERO_SLIDES.length);
-    }, 6000);
+      setCurrentHero(prev => (prev + 1) % HERO_SLIDES.length);
+    }, 5000);
 
     return () => {
-      window.removeEventListener('focus', handleFocus);
       clearInterval(interval);
       clearInterval(heroInterval);
     };
   }, []);
 
-  const heroSlides = products.length >= 3
-    ? products.slice(0, 3).map((product, index) => ({
-        id: product.id,
-        title: product.name,
-        subtitle: product.description,
-        image: product.images[0] || STATIC_HERO_SLIDES[index]?.image,
-        link: `/product/${product.id}`,
-        tag: product.discount > 0 ? `${product.discount}% OFF` : 'Featured'
-      }))
-    : STATIC_HERO_SLIDES;
-
   if (loading) {
     return (
-      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-        <div className="h-96 bg-neutral-100 dark:bg-zinc-900 rounded-[20px] animate-pulse" />
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="h-96 bg-neutral-100 dark:bg-zinc-900 rounded-3xl animate-pulse" />
         <div className="flex gap-4 overflow-hidden">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="w-32 h-32 bg-neutral-100 dark:bg-zinc-900 rounded-2xl flex-shrink-0 animate-pulse" />
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="w-28 h-28 bg-neutral-100 dark:bg-zinc-900 rounded-2xl flex-shrink-0 animate-pulse" />
           ))}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-64 bg-neutral-100 dark:bg-zinc-900 rounded-[20px] animate-pulse" />
+            <div key={i} className="h-72 bg-neutral-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
           ))}
         </div>
       </div>
     );
   }
 
-  // Subsetting products
+  const flashSaleProducts = products.filter(p => p.isFlashDeal || p.discount >= 20).slice(0, 4);
+  const bestSellers = products.filter(p => p.isBestSeller || p.rating >= 4.7).slice(0, 4);
   const featuredProducts = products.slice(0, 4);
-  const trendingProducts = products.slice(2, 6);
-  const bestSellers = products.filter(p => p.rating >= 4.7).slice(0, 4);
-  const flashSaleProducts = products.filter(p => p.discount >= 10).slice(0, 4);
 
   return (
-    <div className="pb-16 space-y-12 sm:space-y-16 max-w-full mx-auto">
+    <div className="pb-16 space-y-12 sm:space-y-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
       
-      {/* 1. Hero Carousel */}
-      <div className="relative w-full h-[320px] sm:h-[450px] lg:h-[550px] overflow-hidden bg-neutral-950">
+      {/* HERO CAROUSEL */}
+      <div className="relative w-full h-[360px] sm:h-[480px] lg:h-[520px] rounded-3xl overflow-hidden shadow-2xl bg-neutral-950">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentHero}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.5 }}
             className="absolute inset-0 w-full h-full"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent z-10" />
             <img
-              src={heroSlides[currentHero].image}
-              alt={heroSlides[currentHero].title}
+              src={HERO_SLIDES[currentHero].image}
+              alt={HERO_SLIDES[currentHero].title}
               className="w-full h-full object-cover object-center"
             />
-            <div className="absolute inset-0 z-20 flex flex-col justify-center px-6 sm:px-12 lg:px-24 text-white max-w-2xl gap-2 sm:gap-4">
-              <span className="text-[10px] sm:text-xs font-bold tracking-widest bg-primary px-3 py-1 rounded-full w-max text-white">
-                {heroSlides[currentHero].tag}
+            
+            <div className="absolute inset-0 z-20 flex flex-col justify-center px-8 sm:px-14 lg:px-20 text-white max-w-2xl gap-3">
+              <span className="text-xs font-black tracking-widest bg-emerald-600 px-3.5 py-1 rounded-full w-max text-white shadow-lg">
+                {HERO_SLIDES[currentHero].badge}
               </span>
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-tight">
-                {heroSlides[currentHero].title}
+              <h1 className="text-3xl sm:text-5xl font-black leading-tight tracking-tight">
+                {HERO_SLIDES[currentHero].title}
               </h1>
-              <p className="text-xs sm:text-sm lg:text-base text-neutral-350 line-clamp-2">
-                {heroSlides[currentHero].subtitle}
+              <h2 className="text-lg sm:text-2xl font-bold text-emerald-400">
+                {HERO_SLIDES[currentHero].subtitle}
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-300 line-clamp-2 leading-relaxed max-w-lg">
+                {HERO_SLIDES[currentHero].description}
               </p>
               <button
-                onClick={() => navigate(heroSlides[currentHero].link)}
-                className="mt-2 w-max bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold px-6 py-3 rounded-full shadow-lg shadow-primary/20 transition-all hover:scale-105 cursor-pointer"
+                onClick={() => navigate(HERO_SLIDES[currentHero].link)}
+                className="mt-4 w-max bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold px-7 py-3.5 rounded-full shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 cursor-pointer flex items-center gap-2"
               >
-                Explore Product
+                {HERO_SLIDES[currentHero].buttonText} <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* Carousel indicators */}
-        <div className="absolute bottom-6 right-6 sm:right-12 z-20 flex gap-2">
-          {heroSlides.map((_, idx) => (
+        <button
+          onClick={() => setCurrentHero(prev => (prev === 0 ? HERO_SLIDES.length - 1 : prev - 1))}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/40 hover:bg-black/80 text-white transition-colors cursor-pointer backdrop-blur-xs"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => setCurrentHero(prev => (prev + 1) % HERO_SLIDES.length)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/40 hover:bg-black/80 text-white transition-colors cursor-pointer backdrop-blur-xs"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+
+        <div className="absolute bottom-6 right-8 z-30 flex gap-2">
+          {HERO_SLIDES.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentHero(idx)}
-              className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
-                idx === currentHero ? 'bg-primary w-6' : 'bg-white/40 hover:bg-white'
+              className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                idx === currentHero ? 'bg-emerald-500 w-8' : 'bg-white/40 hover:bg-white w-2.5'
               }`}
             />
           ))}
         </div>
       </div>
 
-      {/* 2. Categories Scrollbar */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg sm:text-2xl font-extrabold text-neutral-900 dark:text-white">Shop by Category</h2>
+      {/* TRUST FEATURES BAR */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <Truck className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="font-bold text-xs text-neutral-900 dark:text-white">Free Delivery</h4>
+            <p className="text-[10px] text-neutral-500">On orders above ₹499</p>
+          </div>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <RotateCcw className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="font-bold text-xs text-neutral-900 dark:text-white">Easy Returns</h4>
+            <p className="text-[10px] text-neutral-500">30-days return policy</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="font-bold text-xs text-neutral-900 dark:text-white">Secure Payment</h4>
+            <p className="text-[10px] text-neutral-500">100% secure payment</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="font-bold text-xs text-neutral-900 dark:text-white">24/7 Support</h4>
+            <p className="text-[10px] text-neutral-500">Dedicated assistance</p>
+          </div>
+        </div>
+      </div>
+
+      {/* CATEGORIES SECTION */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">Shop by Category</h2>
+            <p className="text-xs text-neutral-500">Explore items tailored to your lifestyle</p>
+          </div>
+          <button onClick={() => navigate('/products')} className="flex items-center gap-1 text-emerald-600 font-bold text-xs hover:underline">
+            View All <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-4">
           {categories.map((cat) => {
             const Icon = getCategoryIcon(cat.icon);
             return (
               <button
                 key={cat.id}
                 onClick={() => navigate(`/products?category=${cat.id}`)}
-                className="flex flex-col items-center gap-3 bg-neutral-50 hover:bg-white dark:bg-zinc-900 dark:hover:bg-zinc-800/80 p-5 rounded-[20px] border border-neutral-100 dark:border-zinc-850 min-w-[130px] flex-shrink-0 transition-all cursor-pointer hover:shadow-lg dark:hover:border-zinc-700"
+                className="flex flex-col items-center gap-2 p-3 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-2xl hover:border-emerald-600 dark:hover:border-emerald-500 hover:shadow-lg transition-all cursor-pointer group"
               >
-                <div className="w-12 h-12 rounded-xl bg-primary-light dark:bg-primary/10 text-primary flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Icon className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-bold text-neutral-700 dark:text-zinc-300">
+                <span className="text-[11px] font-bold text-neutral-800 dark:text-zinc-200 text-center truncate w-full">
                   {cat.name}
                 </span>
               </button>
@@ -227,37 +238,44 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Flash Sale + Live Countdown */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="bg-primary/5 dark:bg-zinc-900/30 border border-primary/20 dark:border-zinc-800 rounded-[28px] p-6 sm:p-8 flex flex-col lg:flex-row items-center gap-8">
+      {/* FLASH SALE WITH LIVE TIMER */}
+      <div className="bg-emerald-900/5 dark:bg-zinc-900/40 border border-emerald-600/20 dark:border-zinc-800 rounded-3xl p-6 sm:p-8">
+        <div className="flex flex-col lg:flex-row items-center gap-8">
           <div className="lg:w-1/4 space-y-4 text-center lg:text-left">
-            <span className="text-red-500 text-xs font-extrabold uppercase tracking-widest flex items-center gap-1.5 justify-center lg:justify-start">
-              <Clock className="w-4 h-4" /> Live Flash Sale
+            <span className="text-red-500 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 justify-center lg:justify-start">
+              <Clock className="w-4 h-4" /> Flash Deals
             </span>
-            <h2 className="text-xl sm:text-3xl font-black text-neutral-900 dark:text-white leading-tight">
-              Hot Deals, Short Window.
+            <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white leading-tight">
+              Limited Time Offers
             </h2>
-            <p className="text-xs text-neutral-500 max-w-xs">
-              Check out these selected premium items matching higher discounts. Only for a short duration.
+            <p className="text-xs text-neutral-500">
+              Grab premium electronics, audio gear, and fashion at high discount rates.
             </p>
-            {/* Live Count clock */}
-            <div className="flex gap-2 justify-center lg:justify-start font-mono text-zinc-800 dark:text-zinc-150">
-              <div className="bg-white dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-800 p-2.5 rounded-xl shadow-xs">
-                <span className="text-lg font-black">{String(timeLeft.hours).padStart(2, '0')}</span>
-                <span className="text-[10px] block text-neutral-400 font-sans">Hrs</span>
+            
+            <div className="flex gap-2 justify-center lg:justify-start font-mono">
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-2.5 rounded-xl shadow-xs text-center min-w-[50px]">
+                <span className="text-xl font-black text-neutral-900 dark:text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
+                <span className="text-[9px] block text-neutral-400 font-sans uppercase font-bold">Hours</span>
               </div>
-              <div className="bg-white dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-800 p-2.5 rounded-xl shadow-xs">
-                <span className="text-lg font-black">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                <span className="text-[10px] block text-neutral-400 font-sans">Min</span>
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-2.5 rounded-xl shadow-xs text-center min-w-[50px]">
+                <span className="text-xl font-black text-neutral-900 dark:text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                <span className="text-[9px] block text-neutral-400 font-sans uppercase font-bold">Mins</span>
               </div>
-              <div className="bg-white dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-800 p-2.5 rounded-xl shadow-xs">
-                <span className="text-lg font-black text-red-500">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                <span className="text-[10px] block text-neutral-400 font-sans">Sec</span>
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-2.5 rounded-xl shadow-xs text-center min-w-[50px]">
+                <span className="text-xl font-black text-red-500">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                <span className="text-[9px] block text-neutral-400 font-sans uppercase font-bold">Secs</span>
               </div>
             </div>
+
+            <button
+              onClick={() => navigate('/products?discount=20')}
+              className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-6 py-3 rounded-full shadow-md transition-all hover:scale-105 cursor-pointer"
+            >
+              View All Deals
+            </button>
           </div>
-          
-          <div className="lg:w-3/4 w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+
+          <div className="lg:w-3/4 w-full grid grid-cols-2 md:grid-cols-4 gap-6">
             {flashSaleProducts.map(p => (
               <ProductCard key={p.id} product={p} />
             ))}
@@ -265,62 +283,60 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Featured Products Grid */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-lg sm:text-2xl font-extrabold text-neutral-900 dark:text-white">Featured Products</h2>
-          <button onClick={() => navigate('/products')} className="flex items-center gap-1 text-primary font-bold text-xs sm:text-sm hover:underline">
+      {/* BEST SELLERS */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">Best Sellers</h2>
+            <p className="text-xs text-neutral-500">Top rated products this week</p>
+          </div>
+          <button onClick={() => navigate('/products')} className="flex items-center gap-1 text-emerald-600 font-bold text-xs hover:underline">
             View All <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {featuredProducts.map(p => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </div>
-
-      {/* 5. Trending Products Grid */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-lg sm:text-2xl font-extrabold text-neutral-900 dark:text-white">Trending Products</h2>
-          <button onClick={() => navigate('/products')} className="flex items-center gap-1 text-primary font-bold text-xs sm:text-sm hover:underline">
-            View All <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {trendingProducts.map(p => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </div>
-
-      {/* 6. Best Sellers Grid */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-lg sm:text-2xl font-extrabold text-neutral-900 dark:text-white">Best Sellers</h2>
-          <button onClick={() => navigate('/products')} className="flex items-center gap-1 text-primary font-bold text-xs sm:text-sm hover:underline">
-            View All <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {bestSellers.map(p => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
       </div>
 
-      {/* 7. Brands list */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="bg-neutral-50 dark:bg-zinc-950 border border-neutral-100 dark:border-zinc-900/60 rounded-[28px] p-8 text-center">
-          <h3 className="font-extrabold text-sm tracking-wider uppercase text-neutral-400 mb-6">Partnering Brands</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-6 items-center">
-            {['Aero', 'Chronos', 'SoundSphere', 'Luna', 'HydroFit', 'Nirvana'].map((brand, i) => (
-              <div key={i} className="bg-white dark:bg-zinc-900 border border-neutral-150 dark:border-zinc-800/80 px-6 py-4 rounded-xl flex items-center justify-center font-black text-neutral-400 dark:text-zinc-650 tracking-widest text-sm hover:text-primary dark:hover:text-primary transition-all">
-                {brand.toUpperCase()}
-              </div>
-            ))}
+      {/* TOP BRANDS */}
+      <div className="bg-neutral-50 dark:bg-zinc-900/50 border border-neutral-200 dark:border-zinc-800 rounded-3xl p-8 text-center">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-black text-sm uppercase tracking-wider text-neutral-400">Top Brands</h3>
+          <button onClick={() => navigate('/products')} className="text-xs font-bold text-emerald-600 hover:underline">
+            View All
+          </button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 items-center">
+          {INITIAL_BRANDS.map((brand) => (
+            <button
+              key={brand.id}
+              onClick={() => navigate(`/products?brand=${brand.name}`)}
+              className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 px-4 py-3 rounded-2xl flex items-center justify-center font-black text-neutral-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-600 transition-all cursor-pointer shadow-xs text-sm"
+            >
+              {brand.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* FEATURED & NEW ARRIVALS */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">Featured & New Arrivals</h2>
+            <p className="text-xs text-neutral-500">Handpicked premium products just arrived</p>
           </div>
+          <button onClick={() => navigate('/products')} className="flex items-center gap-1 text-emerald-600 font-bold text-xs hover:underline">
+            View All <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {featuredProducts.map(p => (
+            <ProductCard key={p.id} product={p} />
+          ))}
         </div>
       </div>
 
